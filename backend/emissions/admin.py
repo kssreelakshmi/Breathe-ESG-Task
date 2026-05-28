@@ -3,10 +3,10 @@ from .models import Company,User, IngestionBatch, EmissionRecord, AuditLog
 from django.contrib.auth.admin import UserAdmin
 
 admin.site.register(Company)
-admin.site.register(User)
 admin.site.register(IngestionBatch)
 admin.site.register(EmissionRecord)
 admin.site.register(AuditLog)
+
 
 class CustomUserAdmin(UserAdmin):
 
@@ -33,3 +33,5 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
+    
+admin.site.register(User, CustomUserAdmin)
