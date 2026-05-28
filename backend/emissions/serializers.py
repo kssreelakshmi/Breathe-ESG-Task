@@ -28,7 +28,7 @@ class IngestionBatchSerializer(serializers.ModelSerializer):
             'company',           
             'company_name',      
             'source_type',
-            'original_filename',
+            'filename',
             'uploaded_by',
             'uploaded_by_name',
             'uploaded_at',

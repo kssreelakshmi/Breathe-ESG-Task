@@ -39,7 +39,7 @@ class IngestionBatch(models.Model):
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='uploads')
     source_type = models.CharField(max_length=20, choices=SOURCE_TYPES)
-    filename     = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255)
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=UPLOAD_STATUS, default='PROCESSING')
@@ -50,6 +50,8 @@ class IngestionBatch(models.Model):
     def __str__(self):
         return f"{self.company.company_name} - {self.source_type} - {self.uploaded_at.strftime('%Y-%m-%d %H:%M:%S')}"
 
+    def _ingestion_short_summary(self):
+        return f"{self.filename}/{self.source_type}"
 
 
 class EmissionRecord(models.Model):
@@ -102,6 +104,8 @@ class EmissionRecord(models.Model):
     def __str__(self):
         return f"{self.company.company_name} - {self.category} - {self.quantity_normalized} {self.unit_normalized} on {self.period_start}"
     
+    def _ingestion_data(self):
+        return f"{self.ingestion._ingestion_short_summary()}"
     class Meta:
         ordering = ['-period_start']
 
