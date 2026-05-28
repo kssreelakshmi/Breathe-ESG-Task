@@ -12,6 +12,7 @@ urlpatterns = [
     path('ingest/travel/', views.upload_travel, name='upload-travel'),
 
     path('records/', views.get_records, name='record-list'),
+    path('records/<int:pk>/', views.get_record_detail, name='record-detail'),
     path('records/<int:pk>/approve/', views.approve_record, name='approve-record'),
     path('records/<int:pk>/reject/', views.reject_record, name='reject-record'),
 
