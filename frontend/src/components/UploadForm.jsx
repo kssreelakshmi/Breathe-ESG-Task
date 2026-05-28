@@ -28,6 +28,7 @@ export default function UploadForm({ title, icon, sourceType, endpoint, fields }
             const res = await api.post(endpoint, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
+            console.log(res)
             setResult(res.data)
             setFile(null)
             // reset file input
@@ -77,11 +78,11 @@ export default function UploadForm({ title, icon, sourceType, endpoint, fields }
                 <div style={styles.resultBox}>
                     <div style={styles.resultRow}>
                         <span style={styles.successCount}>
-                            ✅ {result.success} rows imported
+                            {result.success} rows imported
                         </span>
                         {result.failed > 0 && (
                             <span style={styles.failedCount}>
-                                ❌ {result.failed} failed
+                                {result.failed} failed
                             </span>
                         )}
                     </div>

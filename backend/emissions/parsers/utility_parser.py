@@ -1,6 +1,8 @@
 import io
 import pandas as pd
 from decimal import Decimal
+from emissions.utils import safe_dict
+from emissions.models import EmissionRecord, AuditLog
 
 
 # UNIT CONVERSIONS → kWh
@@ -92,7 +94,6 @@ def parse_utility_csv(file_content, company, batch, uploaded_by):
     Returns:
         {'success': int, 'failed': int, 'errors': list}
     """
-    from emissions.models import EmissionRecord, AuditLog
 
     # Decode bytes 
     try:
@@ -114,13 +115,11 @@ def parse_utility_csv(file_content, company, batch, uploaded_by):
     # DD-MM-YYYY, DD.MM.YYYY automatically
     df['from_date'] = pd.to_datetime(
         df['Billing_From'],
-        infer_datetime_format=True,
         dayfirst=True,      # prefer DD/MM/YYYY over MM/DD/YYYY
         errors='coerce',
     )
     df['to_date'] = pd.to_datetime(
         df['Billing_To'],
-        infer_datetime_format=True,
         dayfirst=True,
         errors='coerce',
     )
@@ -219,7 +218,7 @@ def parse_utility_csv(file_content, company, batch, uploaded_by):
                     company             = company,
                     ingestion           = batch,
                     source_ref          = source_ref,
-                    raw_data            = row.to_dict(),
+                    raw_data            = safe_dict(row),  
                     scope               = 2,          # electricity = always Scope 2
                     category            = 'electricity',
                     period_start        = month_start,

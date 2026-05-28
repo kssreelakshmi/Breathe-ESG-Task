@@ -71,6 +71,7 @@ class EmissionRecord(models.Model):
     ingestion = models.ForeignKey(IngestionBatch, on_delete=models.CASCADE, related_name='emission_records')
     
     source_ref = models.CharField(max_length=255, blank=True)
+    raw_data   = models.JSONField(default=dict)
     scope = models.IntegerField(choices=SCOPE_CHOICES)
     category = models.CharField(max_length=100)
     
@@ -99,7 +100,7 @@ class EmissionRecord(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.company.company_name} - {self.category} - {self.quantity_normalized} {self.unit_normalized} on {self.date}"
+        return f"{self.company.company_name} - {self.category} - {self.quantity_normalized} {self.unit_normalized} on {self.period_start}"
     
     class Meta:
         ordering = ['-period_start']

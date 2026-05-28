@@ -5,9 +5,9 @@ import SummaryCards from '../components/SummaryCards'
 import RecordTable from '../components/RecordTable'
 
 export default function Dashboard() {
-    const [records, setRecords]             = useState([])
-    const [summary, setSummary]             = useState({})
-    const [loading, setLoading]             = useState(true)
+    const [records, setRecords] = useState([])
+    const [summary, setSummary] = useState({})
+    const [loading, setLoading] = useState(true)
     const [actionLoading, setActionLoading] = useState(null)
 
     // filters
@@ -24,9 +24,9 @@ export default function Dashboard() {
         setLoading(true)
         try {
             const params = {}
-            if (statusFilter) params.status      = statusFilter
+            if (statusFilter) params.status = statusFilter
             if (sourceFilter) params.source_type = sourceFilter
-            if (scopeFilter)  params.scope       = scopeFilter
+            if (scopeFilter)  params.scope = scopeFilter
 
             const [recRes, sumRes] = await Promise.all([
                 api.get('/records/', { params }),

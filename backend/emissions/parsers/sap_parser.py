@@ -1,6 +1,7 @@
 import io
 import pandas as pd
 from decimal import Decimal
+from emissions.utils import safe_dict
 
 
 # LOOKUP TABLES
@@ -97,6 +98,7 @@ def check_suspicious(normalized_qty, canonical_unit):
         )
     return None
 
+
 # MAIN PARSER
 def parse_sap_csv(file_content, company, batch, uploaded_by):
     """
@@ -127,13 +129,12 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
     #   prevents pandas auto-converting "00010" (PO line) → 10
     # keep_default_na=False → empty strings stay as ''
     #   prevents pandas converting blank cells to NaN silently
-    df = pd.read_csv(io.StringIO(content),dtype=str,keep_default_na=False,)
-
-    # ── Clean column names ────────────────────────────────────
-    # strip whitespace from column names (SAP sometimes adds spaces)
+    
+    df = pd.read_csv(io.StringIO(content),dtype=str,keep_default_na=False,)  
     df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.upper()
 
-    # ── Rename SAP German columns to readable names ───────────
+
     df = df.rename(columns={
         'WERKS': 'plant_code',
         'BUDAT': 'date_str',
@@ -145,19 +146,21 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
         'TXZ01': 'description',
     })
 
-    # ── Strip whitespace from all string columns at once ──────
     df = df.apply(
-        lambda col: col.str.strip() if col.dtype == 'object' else col
+        lambda col: col.astype(str).str.strip() if col.dtype == 'object' else col
     )
+    # str_cols = df.select_dtypes(include=['object']).columns
+    # for col in str_cols:
+    #     df[col] = df[col].str.strip()
 
-    # ── Fix SAP European decimal in quantity column ───────────
+    # Fix SAP European decimal in quantity column
     # vectorized replace across entire column
     df['quantity_str'] = (
         df['quantity_str'].str.replace(r'\.(?=\d{3},)', '', regex=True).str.replace(',', '.', regex=False))
         # "1.500,00" → "1500.00" ,"500,00"   → "500.00"
         
 
-    # ── Parse dates vectorized ────────────────────────────────
+    # Parse dates vectorized
     # try YYYYMMDD first (most common SAP format)
     df['parsed_date'] = pd.to_datetime(df['date_str'],format='%Y%m%d',errors='coerce', )   # unparseable → NaT, not crash
     # where that failed, try DD.MM.YYYY (German format)
@@ -168,10 +171,8 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
         errors='coerce',
     )
 
-    # ── Drop completely empty rows ────────────────────────────
     df = df.dropna(how='all')
 
-    # ── Required columns check ────────────────────────────────
     required = ['plant_code', 'date_str', 'material', 'quantity_str', 'unit_str']
     for col in required:
         if col not in df.columns:
@@ -181,13 +182,13 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
                 'errors':  [{'row': 'all', 'error': f"Missing required column: {col}", 'data': {}}],
             }
 
-    # ── Loop and create records ───────────────────────────────
     success_count = 0
     failed_count  = 0
     errors        = []
 
     for idx, row in df.iterrows():
-        row_num = idx + 2  # +2 because header is row 1, df index starts at 0
+        # breakpoint()
+        row_num = idx + 1  # +1 because header is row 1, df index starts at 0
 
         try:
             # Validate required fields
@@ -248,23 +249,23 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
 
             # Save EmissionRecord 
             record = EmissionRecord.objects.create(
-                company             = company,
-                ingestion           = batch,
-                source_ref          = source_ref,
-                raw_data            = row.to_dict(),
-                scope               = 1,            # SAP fuel = always Scope 1
-                category            = category,
-                period_start        = posting_date,
-                period_end          = None,
-                quantity_raw        = quantity_raw,
-                unit_raw            = unit_str,
+                company = company,
+                ingestion = batch,
+                source_ref = source_ref,
+                raw_data = safe_dict(row),
+                scope = 1,            
+                category = category,
+                period_start = posting_date,
+                period_end = None,
+                quantity_raw = quantity_raw,
+                unit_raw = unit_str,
                 quantity_normalized = quantity_normalized,
-                unit_normalized     = unit_normalized,
-                location            = location,
-                description         = description,
-                status              = 'FLAGGED' if flag_reason else 'PENDING',
-                is_flagged          = bool(flag_reason),
-                flag_reason         = flag_reason or '',
+                unit_normalized = unit_normalized,
+                location = location,
+                description = description,
+                status = 'FLAGGED' if flag_reason else 'PENDING',
+                is_flagged = bool(flag_reason),
+                flag_reason = flag_reason or '',
             )
 
             #  Audit log 

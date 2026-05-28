@@ -102,12 +102,15 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                             </td>
 
                             {/* Actions */}
+                            
                             <td style={styles.td}>
                                 {record.is_locked ? (
                                     <span style={styles.lockedText}>🔒 Locked</span>
                                 ) : (
                                     <div style={styles.actionBtns}>
+                                       
                                         <button
+                                        
                                             style={
                                                 record.status === 'APPROVED'
                                                     ? styles.approveBtnDone

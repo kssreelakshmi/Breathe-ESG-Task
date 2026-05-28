@@ -121,11 +121,11 @@ def _handle_upload(request, source_type, parser_fn):
 
     # create batch record
     batch = IngestionBatch.objects.create(
-        company           = company,
-        source_type       = source_type,
-        original_filename = file.name,
-        uploaded_by       = request.user,      # real user, not hardcoded
-        status            = 'PROCESSING'
+        company = company,
+        source_type = source_type,
+        filename = file.name,
+        uploaded_by = request.user,      # real user, not hardcoded
+        status = 'PROCESSING'
     )
 
     try:
