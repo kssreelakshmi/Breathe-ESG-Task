@@ -190,12 +190,15 @@ def get_records(request):
     Returns emission records.
     Filters: status, company_id, source_type, scope, is_flagged
     """
+
     records = EmissionRecord.objects.select_related(
-        'company', 'ingestion', 'reviewed_by'
+        'company',
+        'ingestion',
+        'reviewed_by'
     )
 
     if not request.user.is_superuser:
-        records = records.filter(company=request.user.company)  # ForeignKey
+        records = records.filter(company=request.user.company)
 
     # optional filters from query params
     status_filter = request.GET.get('status')
@@ -208,7 +211,9 @@ def get_records(request):
 
     source_type = request.GET.get('source_type')
     if source_type:
-        records = records.filter(ingestion__source_type=source_type)  # fixed
+        records = records.filter(
+            ingestion__source_type=source_type
+        )
 
     scope = request.GET.get('scope')
     if scope:
@@ -218,9 +223,12 @@ def get_records(request):
     if is_flagged == 'true':
         records = records.filter(is_flagged=True)
 
-    serializer = EmissionRecordListSerializer(records, many=True)
-    return Response(serializer.data)
+    # newest first
+    records = records.order_by('-created_at')
 
+    serializer = EmissionRecordListSerializer(records, many=True)
+
+    return Response(serializer.data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
