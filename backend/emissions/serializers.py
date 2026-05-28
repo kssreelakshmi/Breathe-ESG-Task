@@ -73,6 +73,8 @@ class EmissionRecordListSerializer(serializers.ModelSerializer):
     source_type      = serializers.CharField(source='ingestion.source_type', read_only=True)
     reviewed_by_name = serializers.SerializerMethodField()
     scope_label      = serializers.SerializerMethodField()
+    ingestion_data   = serializers.SerializerMethodField()
+
 
     class Meta:
         model  = EmissionRecord
@@ -81,6 +83,7 @@ class EmissionRecordListSerializer(serializers.ModelSerializer):
             'company',
             'company_name',
             'ingestion',
+            'ingestion_data',   
             'source_type',       # SAP / UTILITY / TRAVEL
             'source_ref',        # PO number / meter ID / trip ID
             'scope',
@@ -114,6 +117,9 @@ class EmissionRecordListSerializer(serializers.ModelSerializer):
         # returns "Scope 1" / "Scope 2" / "Scope 3" cleanly
         mapping = {1: 'Scope 1', 2: 'Scope 2', 3: 'Scope 3'}
         return mapping.get(obj.scope, 'Unknown')
+    
+    def get_ingestion_data(self, obj): 
+        return obj._ingestion_data() 
 
 class EmissionRecordDetailSerializer(EmissionRecordListSerializer):
     audit_logs = AuditLogSerializer(many=True, read_only=True)

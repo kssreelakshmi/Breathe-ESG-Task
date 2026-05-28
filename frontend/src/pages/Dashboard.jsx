@@ -19,7 +19,7 @@ export default function Dashboard() {
     const [rejectModal, setRejectModal] = useState(null)
     const [rejectNote, setRejectNote]   = useState('')
 
-    // ── Fetch records + summary ──────────────────────────────
+    //  Fetch records + summary 
     const fetchData = useCallback(async () => {
         setLoading(true)
         try {

@@ -51,7 +51,7 @@ class IngestionBatch(models.Model):
         return f"{self.company.company_name} - {self.source_type} - {self.uploaded_at.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def _ingestion_short_summary(self):
-        return f"{self.filename}/{self.source_type}"
+        return f"{self.filename}/{self.source_type}".lower()
 
 
 class EmissionRecord(models.Model):

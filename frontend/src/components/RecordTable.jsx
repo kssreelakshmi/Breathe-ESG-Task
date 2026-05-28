@@ -25,6 +25,7 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                         <th style={styles.th}>Normalized</th>
                         <th style={styles.th}>Period</th>
                         <th style={styles.th}>Location</th>
+                        <th style={styles.th}>Ingestion Batch</th>
                         <th style={styles.th}>Status</th>
                         {user.role === 'analyst' && (
                         <th style={styles.th}>Actions</th>
@@ -82,6 +83,11 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                             {/* Location */}
                             <td style={styles.td}>
                                 {record.location || '—'}
+                            </td>
+
+                            {/* Ingestion Batch */}
+                            <td style={styles.td}>
+                                {record.ingestion_data || '—'}
                             </td>
 
                             {/* Status + flag reason */}
