@@ -11,7 +11,6 @@ services:
     rootDir: backend
     buildCommand: "./build.sh"
     startCommand: "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
-    plan: free
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -30,7 +29,6 @@ services:
     rootDir: frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
-    plan: free
     envVars:
       - key: VITE_API_URL
         sync: false         # fill in manually after backend deploys
