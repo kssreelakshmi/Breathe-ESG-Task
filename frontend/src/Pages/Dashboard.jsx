@@ -139,7 +139,7 @@ export default function Dashboard() {
                     </button>
                 </div>
 
-                {/* table — loading state handled here, table itself is clean */}
+                
                 {loading ? (
                     <div style={styles.loadingBox}>Loading records...</div>
                 ) : (
@@ -153,7 +153,6 @@ export default function Dashboard() {
 
             </div>
 
-            {/* reject modal — lives in Dashboard because it needs handleReject */}
             {rejectModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modal}>

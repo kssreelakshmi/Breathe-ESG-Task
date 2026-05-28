@@ -1,6 +1,9 @@
 import StatusBadge from './StatusBadge'
+import { useAuth } from '../context/useAuth'
+
 
 export default function RecordTable({ records, actionLoading, onApprove, onReject }) {
+    const { user} = useAuth()
 
     if (records.length === 0) {
         return (
@@ -23,7 +26,9 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                         <th style={styles.th}>Period</th>
                         <th style={styles.th}>Location</th>
                         <th style={styles.th}>Status</th>
+                        {user.role === 'analyst' && (
                         <th style={styles.th}>Actions</th>
+                         )}
                     </tr>
                 </thead>
                 <tbody>
@@ -102,8 +107,9 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                             </td>
 
                             {/* Actions */}
-                            
-                            <td style={styles.td}>
+                            {user.role === 'analyst' && (
+
+                                <td style={styles.td}>
                                 {record.is_locked ? (
                                     <span style={styles.lockedText}>🔒 Locked</span>
                                 ) : (
@@ -146,7 +152,8 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                                         </button>
                                     </div>
                                 )}
-                            </td>
+                                </td>
+                            )}
                         </tr>
                     ))}
                 </tbody>
