@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .permissions import IsStaff, IsAnalyst
+from .exceptions import UnsupportedFileError
 
 from .models import Company, EmissionRecord, IngestionBatch, AuditLog, User
 from .serializers import (
@@ -145,6 +146,15 @@ def _handle_upload(request, source_type, parser_fn):
             'failed':     results['failed'],
             'errors':     results.get('errors', []),
         }, status=status.HTTP_201_CREATED)
+
+    except UnsupportedFileError as e:
+        batch.status = 'FAILED'
+        batch.notes  = str(e)
+        batch.save()
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     except Exception as e:
         batch.status = 'FAILED'

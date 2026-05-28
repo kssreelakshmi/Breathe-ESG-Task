@@ -2,6 +2,7 @@ import csv
 import io
 from decimal import Decimal
 from datetime import datetime
+from emissions.exceptions import UnsupportedFileError
 
 
 # WHY csv MODULE (NOT pandas)?
@@ -155,13 +156,35 @@ def parse_travel_csv(file_content, company, batch, uploaded_by):
     """
     from emissions.models import EmissionRecord, AuditLog
 
-    # Decode bytes 
+    # Decode bytes
     try:
         content = file_content.decode('utf-8')
     except UnicodeDecodeError:
         content = file_content.decode('latin-1')
 
-    reader = csv.DictReader(io.StringIO(content))
+    try:
+        reader = csv.DictReader(io.StringIO(content))
+        headers = reader.fieldnames
+    except Exception:
+        raise UnsupportedFileError(
+            "Could not parse file as CSV. Please upload a valid corporate travel export (.csv)."
+        )
+
+    if not headers:
+        raise UnsupportedFileError(
+            "File appears to be empty or has no header row. "
+            "Expected columns: Trip_ID, Employee_ID, Travel_Date, Type, From, To, Class, Nights. "
+            "Download the sample CSV from the upload page for the correct format."
+        )
+
+    TRAVEL_REQUIRED = ['Trip_ID', 'Travel_Date', 'Type']
+    missing = [col for col in TRAVEL_REQUIRED if col not in headers]
+    if missing:
+        raise UnsupportedFileError(
+            f"Unsupported file format. Missing required travel columns: {', '.join(missing)}. "
+            f"Expected: Trip_ID, Employee_ID, Travel_Date, Type, From, To, Class, Nights (optional: Purpose). "
+            f"Download the sample CSV from the upload page for the correct format."
+        )
 
     success_count = 0
     failed_count  = 0

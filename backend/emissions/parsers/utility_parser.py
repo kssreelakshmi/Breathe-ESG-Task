@@ -3,6 +3,7 @@ import pandas as pd
 from decimal import Decimal
 from emissions.utils import safe_dict
 from emissions.models import EmissionRecord, AuditLog
+from emissions.exceptions import UnsupportedFileError
 
 
 # UNIT CONVERSIONS → kWh
@@ -101,42 +102,33 @@ def parse_utility_csv(file_content, company, batch, uploaded_by):
     except UnicodeDecodeError:
         content = file_content.decode('latin-1')
 
-    # Read with pandas 
-    df = pd.read_csv(io.StringIO(content),dtype=str,keep_default_na=False,)
+    # Read with pandas
+    try:
+        df = pd.read_csv(io.StringIO(content), dtype=str, keep_default_na=False)
+    except Exception:
+        raise UnsupportedFileError(
+            "Could not parse file as CSV. Please upload a valid utility portal export (.csv)."
+        )
 
-    # Clean column names 
+    # Clean column names
     df.columns = df.columns.str.strip()
 
-    # Strip whitespace from all string columns 
+    # Validate required columns before any processing
+    UTILITY_REQUIRED = ['Account_No', 'Billing_From', 'Billing_To', 'Consumption']
+    missing = [col for col in UTILITY_REQUIRED if col not in df.columns]
+    if missing:
+        raise UnsupportedFileError(
+            f"Unsupported file format. Missing required utility columns: {', '.join(missing)}. "
+            f"Expected: Account_No, Billing_From, Billing_To, Consumption, Unit (optional: Meter_ID, Location). "
+            f"Download the sample CSV from the upload page for the correct format."
+        )
+
     df = df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
 
-    # Parse both date columns vectorized 
-    # infer_datetime_format=True handles DD/MM/YYYY, YYYY-MM-DD,
-    # DD-MM-YYYY, DD.MM.YYYY automatically
-    df['from_date'] = pd.to_datetime(
-        df['Billing_From'],
-        dayfirst=True,      # prefer DD/MM/YYYY over MM/DD/YYYY
-        errors='coerce',
-    )
-    df['to_date'] = pd.to_datetime(
-        df['Billing_To'],
-        dayfirst=True,
-        errors='coerce',
-    )
+    df['from_date'] = pd.to_datetime(df['Billing_From'], dayfirst=True, errors='coerce')
+    df['to_date']   = pd.to_datetime(df['Billing_To'],   dayfirst=True, errors='coerce')
 
-    # ── Clean consumption column vectorized 
-    # remove thousands commas: "12,500" → "12500"
     df['consumption_clean'] = df['Consumption'].str.replace(',', '', regex=False)
-
-    # ── Required columns check 
-    required = ['Account_No', 'Billing_From', 'Billing_To', 'Consumption']
-    for col in required:
-        if col not in df.columns:
-            return {
-                'success': 0,
-                'failed':  len(df),
-                'errors':  [{'row': 'all', 'error': f"Missing column: {col}", 'data': {}}],
-            }
 
     # Drop completely empty rows
     df = df.dropna(how='all')

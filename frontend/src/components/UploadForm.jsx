@@ -1,6 +1,52 @@
 import { useState } from 'react'
 import api from '../api/axios'
 
+const SAMPLE_CSVS = {
+    SAP: {
+        filename: 'sample_sap.csv',
+        content: [
+            'WERKS,BUDAT,MATNR,MENGE,MEINS,EBELN,EBELP,TXZ01',
+            '1000,20240115,DIESEL-001,500.00,LTR,4500001234,00010,Diesel for generator',
+            '2000,20240118,PETROL-002,"1.200,00",LTR,4500001235,00010,Petrol fleet vehicles',
+            '3000,20240120,NATGAS-004,800.00,M3,4500001236,00010,Natural gas boiler',
+            '1000,20240122,LPG-005,250.00,KG,4500001237,00020,LPG kitchen',
+        ].join('\n'),
+    },
+    UTILITY: {
+        filename: 'sample_utility.csv',
+        content: [
+            'Account_No,Meter_ID,Billing_From,Billing_To,Consumption,Unit,Location',
+            'ACC-001,MTR-BLR-01,01/12/2023,03/01/2024,12500,kWh,Bangalore Office',
+            'ACC-002,MTR-MUM-01,15/12/2023,14/01/2024,8750,kWh,Mumbai Factory',
+            'ACC-003,MTR-DEL-01,01/01/2024,31/01/2024,5200,kVAh,Delhi Warehouse',
+        ].join('\n'),
+    },
+    TRAVEL: {
+        filename: 'sample_travel.csv',
+        content: [
+            'Trip_ID,Employee_ID,Travel_Date,Type,From,To,Class,Nights,Purpose',
+            'TRP-001,EMP-101,2024-01-10,FLIGHT,BOM,LHR,BUSINESS,,Client meeting London',
+            'TRP-001,EMP-101,2024-01-13,HOTEL,,LHR,,2,Client meeting London',
+            'TRP-002,EMP-202,2024-01-15,FLIGHT,DEL,SIN,ECONOMY,,Conference Singapore',
+            'TRP-003,EMP-303,2024-01-20,FLIGHT,BOM,XYZ,ECONOMY,,Unknown route test',
+            'TRP-004,EMP-404,2024-01-22,CAB,,,,,Airport transfer',
+            'TRP-005,EMP-505,2024-01-25,TRAIN,DEL,BOM,,,Sales visit',
+        ].join('\n'),
+    },
+}
+
+function downloadSample(sourceType) {
+    const sample = SAMPLE_CSVS[sourceType]
+    if (!sample) return
+    const blob = new Blob([sample.content], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = sample.filename
+    a.click()
+    URL.revokeObjectURL(url)
+}
+
 export default function UploadForm({ title, icon, sourceType, endpoint, fields }) {
     const [file, setFile]       = useState(null)
     const [loading, setLoading] = useState(false)
@@ -48,6 +94,13 @@ export default function UploadForm({ title, icon, sourceType, endpoint, fields }
                 <div>
                     <h3 style={styles.title}>{title}</h3>
                     <p style={styles.hint}>{fields}</p>
+                    <button
+                        style={styles.sampleBtn}
+                        onClick={() => downloadSample(sourceType)}
+                        type="button"
+                    >
+                        ↓ Download sample CSV
+                    </button>
                 </div>
             </div>
 
@@ -122,6 +175,17 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
+    },
+    sampleBtn: {
+        marginTop: 6,
+        padding: '3px 0',
+        background: 'none',
+        border: 'none',
+        color: '#16a34a',
+        fontSize: 12,
+        cursor: 'pointer',
+        textDecoration: 'underline',
+        textUnderlineOffset: 2,
     },
     header: {
         display: 'flex',

@@ -2,6 +2,7 @@ import io
 import pandas as pd
 from decimal import Decimal
 from emissions.utils import safe_dict
+from emissions.exceptions import UnsupportedFileError
 
 
 # LOOKUP TABLES
@@ -125,15 +126,24 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
         content = file_content.decode('latin-1')
 
     # ── Read with pandas ──────────────────────────────────────
-    # dtype=str → read everything as string
-    #   prevents pandas auto-converting "00010" (PO line) → 10
-    # keep_default_na=False → empty strings stay as ''
-    #   prevents pandas converting blank cells to NaN silently
-    
-    df = pd.read_csv(io.StringIO(content),dtype=str,keep_default_na=False,)  
+    try:
+        df = pd.read_csv(io.StringIO(content), dtype=str, keep_default_na=False)
+    except Exception:
+        raise UnsupportedFileError(
+            "Could not parse file as CSV. Please upload a valid SAP flat-file export (.csv)."
+        )  
     df.columns = df.columns.str.strip()
     df.columns = df.columns.str.upper()
 
+    # Validate required columns BEFORE rename so error shows SAP column names
+    SAP_REQUIRED = ['WERKS', 'BUDAT', 'MATNR', 'MENGE', 'MEINS']
+    missing = [col for col in SAP_REQUIRED if col not in df.columns]
+    if missing:
+        raise UnsupportedFileError(
+            f"Unsupported file format. Missing required SAP columns: {', '.join(missing)}. "
+            f"Expected: WERKS, BUDAT, MATNR, MENGE, MEINS (optional: EBELN, EBELP, TXZ01). "
+            f"Download the sample CSV from the upload page for the correct format."
+        )
 
     df = df.rename(columns={
         'WERKS': 'plant_code',
@@ -149,21 +159,11 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
     df = df.apply(
         lambda col: col.astype(str).str.strip() if col.dtype == 'object' else col
     )
-    # str_cols = df.select_dtypes(include=['object']).columns
-    # for col in str_cols:
-    #     df[col] = df[col].str.strip()
 
-    # Fix SAP European decimal in quantity column
-    # vectorized replace across entire column
     df['quantity_str'] = (
         df['quantity_str'].str.replace(r'\.(?=\d{3},)', '', regex=True).str.replace(',', '.', regex=False))
-        # "1.500,00" → "1500.00" ,"500,00"   → "500.00"
-        
 
-    # Parse dates vectorized
-    # try YYYYMMDD first (most common SAP format)
-    df['parsed_date'] = pd.to_datetime(df['date_str'],format='%Y%m%d',errors='coerce', )   # unparseable → NaT, not crash
-    # where that failed, try DD.MM.YYYY (German format)
+    df['parsed_date'] = pd.to_datetime(df['date_str'], format='%Y%m%d', errors='coerce')
     mask = df['parsed_date'].isna()
     df.loc[mask, 'parsed_date'] = pd.to_datetime(
         df.loc[mask, 'date_str'],
@@ -172,15 +172,6 @@ def parse_sap_csv(file_content, company, batch, uploaded_by):
     )
 
     df = df.dropna(how='all')
-
-    required = ['plant_code', 'date_str', 'material', 'quantity_str', 'unit_str']
-    for col in required:
-        if col not in df.columns:
-            return {
-                'success': 0,
-                'failed':  len(df),
-                'errors':  [{'row': 'all', 'error': f"Missing required column: {col}", 'data': {}}],
-            }
 
     success_count = 0
     failed_count  = 0
