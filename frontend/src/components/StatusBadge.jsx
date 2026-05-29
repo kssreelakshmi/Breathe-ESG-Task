@@ -11,12 +11,14 @@ export default function StatusBadge({ status }) {
     return (
         <span style={{
             ...s,
-            padding: '3px 10px',
+            // padding: '1px 10px',
             borderRadius: 99,
             fontSize: 11,
             fontWeight: 700,
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
+            display:'contents',
+
         }}>
             {status}
         </span>

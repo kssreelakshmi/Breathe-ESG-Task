@@ -35,8 +35,11 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
         <>
             <div style={styles.wrapper}>
                 <table style={styles.table}>
-                    <thead>
+                   <thead>
                         <tr style={styles.thead}>
+                            {user?.role === 'analyst' && (
+                                <th style={styles.th}>Company</th>
+                            )}
                             <th style={styles.th}>Source</th>
                             <th style={styles.th}>Scope</th>
                             <th style={styles.th}>Category</th>
@@ -49,6 +52,7 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                             {user?.role === 'analyst' && (
                                 <th style={styles.th}>Actions</th>
                             )}
+                            <th style={styles.th}>...</th>  
                         </tr>
                     </thead>
                     <tbody>
@@ -60,6 +64,11 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                                     background: record.is_flagged ? '#fff7ed' : '#fff',
                                 }}
                             >
+                                {/* Company — analyst only */}
+                                {user?.role === 'analyst' && (
+                                    <td style={styles.td}>{record.company_name}</td>
+                                )}
+
                                 {/* Source */}
                                 <td style={styles.td}>
                                     <span style={styles.sourceBadge}>
@@ -100,14 +109,14 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                                     {record.location || '—'}
                                 </td>
 
-                                {/* Batch — fixed: was record.ingestion_data */}
+                                {/* Batch */}
                                 <td style={styles.td}>
                                     <span style={styles.batchText}>
                                         #{record.ingestion}
                                     </span>
                                 </td>
 
-                                {/* Status + flags + detail link */}
+                                {/* Status + flags */}
                                 <td style={styles.td}>
                                     <div style={styles.statusCell}>
                                         <StatusBadge status={record.status} />
@@ -126,13 +135,6 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                                                 {record.review_notes?.length > 40 ? '...' : ''}
                                             </span>
                                         )}
-                                        {/* detail link */}
-                                        <button
-                                            style={styles.detailBtn}
-                                            onClick={() => openDetail(record.id)}
-                                        >
-                                            View details →
-                                        </button>
                                     </div>
                                 </td>
 
@@ -183,6 +185,17 @@ export default function RecordTable({ records, actionLoading, onApprove, onRejec
                                         )}
                                     </td>
                                 )}
+
+                                {/* View Details */}
+                                <td style={{ ...styles.td, display:"flex", flexDirection:"column",alignItems:"center" }}>
+                                    <button
+                                        style={styles.detailBtn}
+                                        onClick={() => openDetail(record.id)}
+                                    >
+                                        View details
+                                    </button>
+                                </td>
+
                             </tr>
                         ))}
                     </tbody>
@@ -362,6 +375,7 @@ const styles = {
         fontSize: 13,
         color: '#374151',
         verticalAlign: 'top',
+
     },
     sourceBadge: {
         background: '#eff6ff',
@@ -385,6 +399,7 @@ const styles = {
         cursor: 'pointer',
         padding: 0,
         textAlign: 'left',
+        
     },
     lockedText: { fontSize: 12, color: '#9ca3af' },
     actionBtns: { display: 'flex', flexDirection: 'column', gap: 5 },

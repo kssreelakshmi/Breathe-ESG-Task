@@ -197,7 +197,7 @@ def get_records(request):
         'reviewed_by'
     )
 
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and request.user.role != 'analyst':
         records = records.filter(company=request.user.company)
 
     # optional filters from query params
@@ -380,7 +380,7 @@ def get_summary(request):
     """
     records = EmissionRecord.objects.all()
 
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and request.user.role != 'analyst':
         records = records.filter(company=request.user.company) 
 
     company_id = request.GET.get('company_id')
